@@ -5,6 +5,11 @@
 import sys
 import random
 import argparse
+# **最重要の修正点**: 'Dict'と'List'を型ヒントとして使うため、
+# Pythonの標準ライブラリであるtypingモジュールから明示的にインポートします。
+from typing import List, Optional, Dict
+
+# 献立データを定義します
 MENU_DATA: Dict[str, List[str]] = {
     "にく": [
         "ハンバーグ",
@@ -133,8 +138,11 @@ def main():
         sys.stderr.write("エラー: 有効なジャンルが標準入力から検出されませんでした。\n")
         sys.exit(1)
     try:
+        # ランダムにジャンルを選択
         selected_genre: str = random.choice(input_genres)
+        # 選択されたジャンルから献立リストを取得
         dishes: List[str] = MENU_DATA[selected_genre]
+        # ランダムに献立を選択
         selected_dish: str = random.choice(dishes)
         
         sys.stdout.write(f"{selected_genre}:{selected_dish}\n")
