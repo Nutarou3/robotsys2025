@@ -5,8 +5,6 @@
 import sys
 import random
 import argparse
-from typing import List, Optional
-
 MENU_DATA: Dict[str, List[str]] = {
     "にく": [
         "ハンバーグ",
@@ -100,7 +98,7 @@ MENU_DATA: Dict[str, List[str]] = {
         "きのこのバター炒め",
     ],
 }
-from menu_data import MENU_DATA
+
 def parse_args():
     """コマンドライン引数を解析"""
     parser = argparse.ArgumentParser(
@@ -110,16 +108,16 @@ def parse_args():
     return parser.parse_args()
 
 def main():
-    
-    parse_args() 
+
+    parse_args()
 
     input_genres: List[str] = []
-    
+
     try:
-        
+
         for line in sys.stdin:
             genre_name = line.strip()
-            
+
             if not genre_name or genre_name.startswith('#'):
                 continue
             if genre_name in MENU_DATA:
@@ -130,7 +128,7 @@ def main():
     except Exception as e:
         sys.stderr.write(f"エラー: 標準入力の処理中に予期せぬエラーが発生しました: {e}\n")
         sys.exit(1)
-    
+
     if not input_genres:
         sys.stderr.write("エラー: 有効なジャンルが標準入力から検出されませんでした。\n")
         sys.exit(1)
@@ -138,6 +136,7 @@ def main():
         selected_genre: str = random.choice(input_genres)
         dishes: List[str] = MENU_DATA[selected_genre]
         selected_dish: str = random.choice(dishes)
+        
         sys.stdout.write(f"{selected_genre}:{selected_dish}\n")
     except Exception as e:
         sys.stderr.write(f"エラー: 献立選定中に予期せぬエラーが発生しました: {e}\n")
