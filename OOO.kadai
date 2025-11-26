@@ -1,0 +1,164 @@
+#仮面ライダーオーズの変身形態教える機
+
+
+
+import sys
+import argparse
+from typing import List, Dict, Set, Optional
+
+# --- 1. 定数とデータ定義 ---
+
+# メダル名とその読み（MEDAL_READINGS）は、現在の機能では未使用のため削除。
+
+# 3枚のメダル（セット）とその対応するコンボ名
+# タカ, トラ, バッタ, ... の順で登録
+FULL_COMBOS: Dict[str, List[str]] = {
+    "タトバ": ["タカ", "トラ", "バッタ"],
+    "ガタキリバ": ["クワガタ", "カマキリ", "バッタ"],
+    "ラトラーター": ["ライオン", "トラ", "チーター"],
+    "サゴーゾ": ["サイ", "ゴリラ", "ゾウ"],
+    "シャウタ": ["シャチ", "電気ウナギ", "タコ"],
+    "プトティラ": ["プテラ", "トリケラ", "ティラノ"],
+    "タジャドル": ["タカ", "クジャク", "コンドル"],
+    "ブラカワニ": ["コブラ", "カメ", "ワニ"],
+    "シガゼシ": ["サイ", "ゴリラ", "シャチ"], # ゲームオリジナル等
+}
+
+# 全メダル名のセット（入力チェック用）
+ALL_MEDALS: Set[str] = set()
+for _, medals in FULL_COMBOS.items():
+    for medal in medals:
+        ALL_MEDALS.add(medal)
+
+# 全コンボ名（ヒント提供用）
+ALL_COMBO_NAMES: Set[str] = set(FULL_COMBOS.keys())
+
+# --- 2. 引数解析 ---
+
+def parse_args():
+    """コマンドライン引数を解析"""
+    parser = argparse.ArgumentParser(
+        description="仮面ライダーオーズのコアメダルからコンボ名への変換、またはメダルからのヒント提供を行います。",
+        prog="ooo_converter"
+    )
+    # 相互排他的なグループを定義
+    group = parser.add_mutually_exclusive_group(required=True)
+    
+    group.add_argument(
+        '-c', '--combo',
+        action='store_true',
+        help='入力された3枚のメダル名から対応するコンボ名を出力します（例: タカ トラ バッタ → タトバ）'
+    )
+    group.add_argument(
+        '-s', '--suggest',
+        action='store_true',
+        help='入力された単一のメダル名から、そのメダルを含むコンボ名と必要なメダルをヒントとして出力します（例: タカ → タトバ、タジャドル...）'
+    )
+    return parser.parse_args()
+
+# --- 3. 処理ロジック ---
+
+def get_normalized_medals(line: str) -> List[str]:
+    """入力行からメダル名を抽出し、余分なスペースを排除してリスト化する"""
+    # 全角スペースやタブを半角スペースに変換し、連続するスペースを一つにまとめる
+    normalized_line = line.replace('　', ' ').strip()
+    return [
+        m for m in normalized_line.split(' ') if m
+    ]
+
+def process_combo_conversion(line: str):
+    """コンボ変換モード (-c) の処理"""
+    medals = get_normalized_medals(line)
+    
+    # 1. メダルの枚数チェック
+    if len(medals) != 3:
+        sys.stderr.write(f"エラー: 3枚のメダルが必要です。（入力: {len(medals)}枚）\n")
+        return
+
+    medals_set = set(medals)
+    
+    # 2. 既知のメダルであるかチェック（メダルが存在しない場合の丁寧なエラー）
+    unknown_medals = medals_set - ALL_MEDALS
+    if unknown_medals:
+        sys.stderr.write(f"エラー: 未知のメダルが検出されました: {', '.join(unknown_medals)}\n")
+        return
+
+    # 3. コンボの完全一致検索
+    found_combo: Optional[str] = None
+    for combo_name, combo_medals in FULL_COMBOS.items():
+        if set(combo_medals) == medals_set:
+            found_combo = combo_name
+            break
+
+    # 4. 結果出力
+    if found_combo:
+        # 成功時は標準出力
+        sys.stdout.write(f"{found_combo}\n")
+    else:
+        # 失敗時は標準エラー出力
+        sys.stderr.write(f"エラー: 組み合わせ {', '.join(medals)} は既知のコンボに一致しません。\n")
+
+def process_suggestion(line: str):
+    """ヒント提供モード (-s) の処理"""
+    medals = get_normalized_medals(line)
+
+    # 1. 入力が単一のメダルであるかチェック
+    if len(medals) != 1:
+        sys.stderr.write(f"エラー: ヒントモードでは単一のメダル名を入力してください。\n")
+        return
+
+    target_medal = medals[0]
+
+    # 2. 既知のメダルであるかチェック
+    if target_medal not in ALL_MEDALS:
+        sys.stderr.write(f"エラー: '{target_medal}' は既知のメダルではありません。\n")
+        return
+
+    # 3. 該当メダルを含むコンボを検索
+    suggestions: Dict[str, List[str]] = {}
+    
+    for combo_name, combo_medals in FULL_COMBOS.items():
+        if target_medal in combo_medals:
+            # 必要なメダル（ターゲットメダルを除く2枚）
+            required_medals = [
+                m for m in combo_medals if m != target_medal
+            ]
+            suggestions[combo_name] = required_medals
+
+    # 4. 結果出力 (標準出力から人が読むメッセージを削除し、データのみを出力)
+    if suggestions:
+        # 辞書順でソートして出力（順序の保証）
+        for combo_name in sorted(suggestions.keys()):
+            required = suggestions[combo_name]
+            # 出力フォーマット例: タトバ:トラ,バッタ
+            sys.stdout.write(f"{combo_name}:{','.join(required)}\n")
+    else:
+        sys.stderr.write(f"警告: '{target_medal}' を含む既知のコンボが見つかりませんでした。\n")
+
+
+def main():
+    args = parse_args()
+
+    # 標準入力から行を読み込み、パイプ接続を想定
+    try:
+        # 各行を個別の入力として処理（パイプやファイルからの入力に対応）
+        for line in sys.stdin:
+            clean_line = line.strip()
+            
+            if not clean_line:
+                continue
+
+            if args.combo:
+                # コンボ変換モードの実行
+                process_combo_conversion(clean_line)
+            elif args.suggest:
+                # ヒント提供モードの実行
+                process_suggestion(clean_line)
+        
+    except Exception as e:
+        # 予期せぬエラーは標準エラー出力へ
+        sys.stderr.write(f"予期せぬエラーが発生しました: {e}\n")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
