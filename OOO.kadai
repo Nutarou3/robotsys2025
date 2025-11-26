@@ -5,11 +5,8 @@
 import sys
 import random
 import argparse
-# **最重要の修正点**: 'Dict'と'List'を型ヒントとして使うため、
-# Pythonの標準ライブラリであるtypingモジュールから明示的にインポートします。
 from typing import List, Optional, Dict
 
-# 献立データを定義します
 MENU_DATA: Dict[str, List[str]] = {
     "にく": [
         "ハンバーグ",
@@ -105,46 +102,70 @@ MENU_DATA: Dict[str, List[str]] = {
 }
 
 def parse_args():
-    """コマンドライン引数を解析"""
+
     parser = argparse.ArgumentParser(
-        description="標準入力で与えられたジャンルリストから献立を確率的に提案します。",
-        prog="menu_proposer"
+        description="標準入力またはコマンドライン引数で与えられたジャンルリストから献立を確率的に提案します。",
+    )
+
+    parser.add_argument(
+        'genres',
+        nargs='*',
+        default=[],
+        help='献立候補とするジャンル名（複数指定可）。例: にく さかな 中華'
     )
     return parser.parse_args()
 
 def main():
 
-    parse_args()
-
+    args = parse_args()
     input_genres: List[str] = []
 
-    try:
-
-        for line in sys.stdin:
-            genre_name = line.strip()
-
-            if not genre_name or genre_name.startswith('#'):
-                continue
+    if args.genres:
+        for genre_name in args.genres:
             if genre_name in MENU_DATA:
                 input_genres.append(genre_name)
-            else:
-                sys.stderr.write(f"警告: '{genre_name}' は登録ジャンルに含まれないため無視されました。\n")
 
-    except Exception as e:
-        sys.stderr.write(f"エラー: 標準入力の処理中に予期せぬエラーが発生しました: {e}\n")
-        sys.exit(1)
+    elif sys.stdin.isatty():
+        try:
+            for line in sys.stdin:
+                genre_name = line.strip()
+
+                if not genre_name:
+                    continue
+                if genre_name in MENU_DATA:
+                    input_genres.append(genre_name)
+
+        except Exception as e:
+            if not isinstance(e, KeyboardInterrupt):
+                sys.stderr.write(f"エラー: 標準入力の処理中に予期せぬエラーが発生しました: {e}\n")
+                sys.exit(1)
+            else:
+                sys.exit(1)
+
+    else:
+        try:
+            for line in sys.stdin:
+                genre_name = line.strip()
+
+                if not genre_name:
+                    continue
+                if genre_name in MENU_DATA:
+                    input_genres.append(genre_name)
+
+        except Exception as e:
+            sys.stderr.write(f"エラー: 標準入力の処理中に予期せぬエラーが発生しました: {e}\n")
+            sys.exit(1)
+
 
     if not input_genres:
-        sys.stderr.write("エラー: 有効なジャンルが標準入力から検出されませんでした。\n")
+        sys.stderr.write("エラー: 有効なジャンルが検出されませんでした。献立候補となるジャンルを指定してください。\n")
         sys.exit(1)
+
     try:
-        # ランダムにジャンルを選択
         selected_genre: str = random.choice(input_genres)
-        # 選択されたジャンルから献立リストを取得
         dishes: List[str] = MENU_DATA[selected_genre]
-        # ランダムに献立を選択
         selected_dish: str = random.choice(dishes)
-        
+
         sys.stdout.write(f"{selected_genre}:{selected_dish}\n")
     except Exception as e:
         sys.stderr.write(f"エラー: 献立選定中に予期せぬエラーが発生しました: {e}\n")
