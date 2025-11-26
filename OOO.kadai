@@ -1,6 +1,7 @@
 #仮面ライダーオーズの変身形態教える機
-
-
+#!/usr/bin/python3
+# SPDX-FileCopyrightText: 2025 Gentoku Morimoto <s24c1123tf@s.chibakoudai.jp>
+# SPDX-License-Identifier: GPL-3.0-only
 
 import sys
 import argparse
