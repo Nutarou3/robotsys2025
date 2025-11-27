@@ -1,173 +1,85 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/bin/bash
 #
 # Copyright (c) 2025 Gentoku Morimoto
 # SPDX-FileCopyrightText: 2025 Gentoku Morimoto <s24c1123tf@s.chibakoudai.jp>
 # SPDX-License-Identifier: GPL-3.0-only
 #
-# このコマンドは、標準入力で受け取ったジャンルリストから献立を確率的に提案します。
-# 標準入力の重複は、そのジャンルの選択確率を上げる「重み」として機能します。
+# menu_proposer コマンドの動作確認用テストスクリプト
+#
+# コマンド名は環境に合わせて変更してください。
+COMMAND="./menu_proposer.py"
 
-import sys
-import random
-import argparse
-from typing import List, Dict
+# --- テストユーティリティ ---
 
-# --- 1. 献立データ定義 ---
-# すべてのデータはこのファイル内で完結させます。
+# カウント初期化
+TEST_COUNT=0
+FAIL_COUNT=0
 
-MENU_DATA: Dict[str, List[str]] = {
-    "にく": [
-        "ハンバーグ",
-        "焼肉",
-        "ローストビーフ",
-        "豚の生姜焼き",
-        "鶏の唐揚げ",
-    ],
-    "さかな": [
-        "鯖の塩焼き",
-        "刺身",
-        "アジフライ",
-        "カレイの煮付け",
-        "海鮮丼",
-    ],
-    "中華": [
-        "麻婆豆腐",
-        "餃子",
-        "回鍋肉",
-        "炒飯",
-        "エビチリ",
-    ],
-    "イタリアン": [
-        "マルゲリータピザ",
-        "カルボナーラ",
-        "ラザニア",
-        "アクアパッツァ",
-        "カプレーゼ",
-    ],
-    "ベジタリアン": [
-        "野菜カレー",
-        "豆腐ハンバーグ",
-        "ひよこ豆のファラフェル",
-        "野菜とキノコのグリル",
-        "豆乳シチュー",
-    ],
-    "ジャンクフード": [
-        "ハンバーガー",
-        "カップ麺",
-        "お菓子",
-        "フライドチキン",
-        "たこ焼き",
-    ],
-    "パン": [
-        "サンドイッチ",
-        "クロワッサン",
-        "フレンチトースト",
-        "カレーパン",
-        "トースト＆目玉焼き",
-    ],
-    "米": [
-        "白米と味噌汁",
-        "おにぎり",
-        "オムライス",
-        "牛丼",
-        "炊き込みご飯",
-    ],
-    "パスタ": [
-        "ペペロンチーノ",
-        "ミートソース",
-        "ジェノベーゼ",
-        "和風きのこパスタ",
-        "ボンゴレ",
-    ],
-    "揚げ物": [
-        "エビフライ",
-        "とんかつ",
-        "コロッケ",
-        "かき揚げ",
-        "天ぷら（野菜）",
-    ],
-    "和食": [
-        "味噌汁",
-        "だし巻き卵",
-        "天ぷら",
-        "おひたし",
-        "蕎麦",
-    ],
-    "煮物": [
-        "肉じゃが",
-        "ブリ大根",
-        "おでん",
-        "筑前煮",
-        "かぼちゃの煮物",
-    ],
-    "炒め物": [
-        "野菜炒め",
-        "ニラレバ炒め",
-        "ゴーヤチャンプルー",
-        "青椒肉絲",
-        "きのこのバター炒め",
-    ],
+# テスト実行関数
+run_test() {
+    TEST_COUNT=$((TEST_COUNT + 1))
+    # 標準出力と標準エラー出力のファイル名を生成
+    OUT_FILE=$(mktemp)
+    ERR_FILE=$(mktemp)
+    
+    # テスト実行
+    eval "$1" > "$OUT_FILE" 2> "$ERR_FILE"
+    STATUS=$?
+
+    # 結果判定
+    if eval "$2"; then
+        echo "OK: $3"
+    else
+        echo "NG: $3"
+        echo "    COMMAND: $1"
+        echo "    EXPECTED: $4"
+        echo "    ACTUAL STATUS: $STATUS"
+        echo "    ACTUAL STDOUT: $(<"$OUT_FILE")"
+        echo "    ACTUAL STDERR: $(<"$ERR_FILE")"
+        FAIL_COUNT=$((FAIL_COUNT + 1))
+    fi
+
+    rm "$OUT_FILE" "$ERR_FILE"
 }
 
-# --- 2. 関数定義とロジック ---
+# --- 1. 必須要件のテスト ---
 
-def parse_args():
-    """コマンドライン引数を解析（現在はオプションを使用しないが、将来の拡張のために定義）"""
-    parser = argparse.ArgumentParser(
-        description="標準入力で与えられたジャンルリストから献立を確率的に提案します。",
-        prog="menu_proposer"
-    )
-    return parser.parse_args()
+# 1-1. 正常終了と出力形式の確認（データ出力のみ）
+run_test \
+    "echo -e 'にく\n中華\n中華' | $COMMAND" \
+    "STATUS -eq 0 && grep -q '^\(にく\|中華\):' \$OUT_FILE && [[ \$(wc -l < \$OUT_FILE) -eq 1 ]]" \
+    "正常終了と出力形式の確認 (ジャンル:料理名 1行)" \
+    "終了ステータス 0, 出力形式 'ジャンル:料理名' 1行"
 
-def main():
-    # コマンドライン引数を解析
-    parse_args()
+# 1-2. 警告がstderrに出ているか確認 (未登録ジャンル)
+run_test \
+    "echo -e 'にく\n未登録ジャンル\nパスタ' | $COMMAND" \
+    "STATUS -eq 0 && grep -q '警告: ' \$ERR_FILE" \
+    "警告がstderrに出ているか確認 (警告メッセージの検出)" \
+    "終了ステータス 0, STDERRに '警告: ' を含む"
 
-    # 標準入力の内容を重みとして格納するリスト
-    input_genres: List[str] = []
+# 1-3. 入力なしで異常終了(1)することを確認 (必須要件)
+run_test \
+    "echo '' | $COMMAND" \
+    "STATUS -eq 1 && grep -q 'エラー: 有効なジャンルが標準入力から検出されませんでした。' \$ERR_FILE" \
+    "入力なしで異常終了(1)することを確認 (エラーメッセージとステータス)" \
+    "終了ステータス 1, STDERRに「有効なジャンルが...」を含む"
 
-    try:
-        # 1. 標準入力からすべての行を読み込み、ジャンルを抽出
-        for line in sys.stdin:
-            genre_name = line.strip()
+# 1-4. 標準入力をオプションのように使っていないことの確認 (減点回避)
+run_test \
+    "$COMMAND にく" \
+    "STATUS -eq 1" \
+    "引数入力で異常終了(1)することを確認" \
+    "終了ステータス 1 (Pythonが引数を使わずstdin待ちになるため)"
 
-            if not genre_name or genre_name.startswith('#'):
-                continue
-            
-            # 既知のジャンルリストに含まれているかチェック
-            if genre_name in MENU_DATA:
-                # 含まれていれば、リストに追加（重み付け）
-                input_genres.append(genre_name)
-            else:
-                # 未知のジャンル名は、標準エラー出力に警告を出力
-                sys.stderr.write(f"警告: '{genre_name}' は登録ジャンルに含まれないため無視されました。\n")
+# --- 2. まとめ ---
 
-    except Exception as e:
-        # 予期せぬエラーは標準エラー出力へ
-        sys.stderr.write(f"エラー: 標準入力の処理中に予期せぬエラーが発生しました: {e}\n")
-        sys.exit(1)
+echo ""
+echo "--- menu_proposer_fixed.py テスト終了 ---"
+echo "結果: 成功 $((TEST_COUNT - FAIL_COUNT)) 件, 失敗 $FAIL_COUNT 件"
 
-    # 有効な入力がなかった場合は、エラーとして処理を終了
-    if not input_genres:
-        sys.stderr.write("エラー: 有効なジャンルが標準入力から検出されませんでした。\n")
-        sys.exit(1)
-
-    try:
-        # A. ジャンルを確率的にランダムに選択（重み付けされた選択）
-        selected_genre: str = random.choice(input_genres)
-        
-        # B. 選択されたジャンルから、料理をランダムに選択
-        dishes: List[str] = MENU_DATA[selected_genre]
-        selected_dish: str = random.choice(dishes)
-        
-        # C. 標準出力からデータのみを出力 (形式: ジャンル:料理名)
-        sys.stdout.write(f"{selected_genre}:{selected_dish}\n")
-        
-    except Exception as e:
-        # 予期せぬエラーは標準エラー出力へ
-        sys.stderr.write(f"エラー: 献立選定中に予期せぬエラーが発生しました: {e}\n")
-        sys.exit(1)
-
-if __name__ == "__main__":
-    main()
+# 総合的な成功判定
+if [ "$FAIL_COUNT" -gt 0 ]; then
+    exit 1
+fi
+exit 0
