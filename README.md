@@ -1,12 +1,4 @@
-- このソフトウェアパッケージは，3条項BSDライセンスの下，再頒布および使用が許可されます．
-- 本パッケージの著作権者  © 2025 Gentoku Morimoto
-
-～利用した著作物～
-- このパッケージは，robosys2025由来のコード（© 2025 Ryuichi Ueda）を利用しています．
-- このパッケージのコードは，下記のスライド（CC-BY-SA 4.0 by Ryuichi Ueda）のものを，本人の許可を得て自身の著作としたものです．
--[出展][ryuichiueda/my_slides robosys_2022](https://github.com/ryuichiueda/my_slides/tree/master/robosys_2022)
-
-**menu_proposerの使い方**
+#**menu_proposerの使い方**
 
 おなかがすいたけど献立が決まらない！！そんなことありますよね。本プログラムは、そんなあなたの悩みを解決します。
 
@@ -20,17 +12,29 @@
 - 国・地域: 和食, 中華, イタリアン, ベジタリアン
 - その他: ジャンクフード
 
-**動作環境**
+#**動作環境**
 
 OS: WSL (Ubuntu) または Linux 環境
 
 言語: Python 3.8 以上
 
-**使用方法**
+#**使用方法**
 
 OOO.kadai をコマンドとして実行できるようにパーミッションを付与します。
 $ chmod +x OOO.kadai
 実行の際には以下のように実行してください
 $ echo ジャンクフード | ./menu_proposer
 実際に使う際にはジャンクフードの位置に、適切なジャンルを入力してください。
+#**ライセンスと著作権**
+**本パッケージのライセンスと著作権**
+本ソフトウェアパッケージは、GPL-3.0-only ライセンスの下に公開されています。
+- Copyright (c) 2025 Gentoku Morimoto
+- SPDX-License-Identifier: GPL-3.0-only
+**利用した著作物**
+本パッケージのコードの骨子および説明の一部は、下記の講義スライドのものを利用しています。
 
+**出典**: ryuichiueda/my_slides robosys_2022
+
+**著作権者**: © 2025 Ryuichi Ueda
+
+**ライセンス**: CC BY-SA 4.0
