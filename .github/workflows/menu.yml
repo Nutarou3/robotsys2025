@@ -27,7 +27,7 @@ jobs:
 
     # 1. コマンドファイルに実行権限を付与 (ファイル名は menu_proposer.py を想定)
     - name: Set execute permission on command file
-      run: chmod +x menu_proposer.py
+      run: chmod +x menu_proposer
 
     # 2. テストスクリプトに実行権限を付与
     - name: Set execute permission on test script
