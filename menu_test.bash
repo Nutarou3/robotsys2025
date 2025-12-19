@@ -7,7 +7,7 @@
 # menu_proposer コマンドの動作確認用テストスクリプト
 #
 # コマンド名は環境に合わせて変更してください。
-COMMAND="./menu_proposer.py"
+COMMAND="./menu_proposer"
 
 # --- テストユーティリティ ---
 
@@ -81,7 +81,7 @@ run_test \
 # --- 2. まとめ ---
 
 echo ""
-echo "--- menu_proposer_fixed.py テスト終了 ---"
+echo "--- menu_proposer_fixed テスト終了 ---"
 echo "結果: 成功 $((TEST_COUNT - FAIL_COUNT)) 件, 失敗 $FAIL_COUNT 件"
 
 # 総合的な成功判定
