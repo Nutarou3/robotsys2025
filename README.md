@@ -65,7 +65,8 @@ Copyright (c) 2025 Gentoku MorimotoLicensed under the GPL-3.0-only.
 
 本パッケージのコードの骨子および説明の一部は、下記の講義スライドのものを利用しています。
 
-** ・著者**:Ryuichi Ueda
+**・著者**:Ryuichi Ueda
 
 **・資料名**: my_slides/robosys_2022
+
 **・ライセンス**: CC BY-SA 4.0
