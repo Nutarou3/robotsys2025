@@ -67,6 +67,6 @@ Copyright (c) 2025 Gentoku MorimotoLicensed under the GPL-3.0-only.
 
 **・著者**:Ryuichi Ueda
 
-**・資料名**: my_slides/robosys_2022
+**・資料名**: https://github.com/ryuichiueda/my_slides/tree/master/robosys_2022
 
 **・ライセンス**: CC BY-SA 4.0
